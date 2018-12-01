@@ -1,22 +1,19 @@
 #!/usr/bin/env bash
 
+printf "%s: " "$0"
+
 function err()
 {
     echo "$*"
     exit 1
 }
 
-[ "$(../calibrate testinput.txt)" == "0" ] || err "testinput.txt failed to equal zero"
+[ "$(../calibrate_repeat data_repeats_10.txt)" == "10" ] || err "data_repeats_10.txt failed to find 10"
 
-[ "$(../calibrate testinput_no_eol.txt)" == "0" ] || err "testinput_no_eol.txt failed to equal zero"
+[ "$(../calibrate_repeat data_repeats_2_loop_1.txt)" == "2" ] || err "data_repeats_2_loop_1.txt failed to find 2"
 
-read -r -d '' DATA <<'EOF'
-1
-2
-3
--6
-EOF
+[ "$(../calibrate_repeat data_repeats_5_looping.txt)" == "5" ] || err "data_repeats_5_looping.txt failed to find 5"
 
-[ "$(  echo "${DATA}" | ../calibrate )" == "0" ] || err "test stdin failed to equal zero"
+[ "$(../calibrate_repeat data_repeats_14_looping.txt)" == "14" ] || err "data_repeats_14_looping.txt failed to find 14"
 
 echo "SUCCESS"

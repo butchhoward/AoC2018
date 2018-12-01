@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+printf "%s: " "$0"
+
 function err()
 {
     echo "$*"
