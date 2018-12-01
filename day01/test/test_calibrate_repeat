@@ -16,4 +16,14 @@ function err()
 
 [ "$(../calibrate_repeat data_repeats_14_looping.txt)" == "14" ] || err "data_repeats_14_looping.txt failed to find 14"
 
+read -r -d '' DATA <<'EOF'
++1
+-2
++3
++1
+EOF
+
+[ "$(  echo "${DATA}" | ../calibrate_repeat )" == "2" ] || err "test stdin failed to equal 2"
+
+
 echo "SUCCESS"
