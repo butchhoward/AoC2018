@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+SOLUTION=0
+
+while IFS= read -r LINE || [[ -n "${LINE}" ]]; do
+  SOLUTION=$(("${SOLUTION}" + "${LINE}"))
+done < "${1:-/dev/stdin}"
+
+echo "${SOLUTION}"
