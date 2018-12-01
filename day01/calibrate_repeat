@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+FREQUENCY=0
+REPEATED=
+FREQUENCIES=()
+
+function is_in()
+{
+    local TARGET=$1
+    shift
+    local -a VALUES=("$@")
+
+    for i in "${VALUES[@]}"; do
+        [ "${i}" == "${TARGET}" ] && return 0
+    done
+    return 1
+}
+
+readarray -t DATA < "${1:-/dev/stdin}"
+FREQUENCIES+=("${FREQUENCY}")
+rounds=0
+
+# get some status data when the signal is sent via `kill -USR1 <pid>`
+trap 'echo "FREQUENCY=${FREQUENCY} sizeof(FREQUENCIES):${#FREQUENCIES[@]} rounds:${rounds}" 1>&2' SIGUSR1
+
+
+until [ -n "${REPEATED}" ]; do
+    ((rounds++))
+
+    for i in "${DATA[@]}"; do
+        FREQUENCY=$((${FREQUENCY} + $i))
+        is_in "${FREQUENCY}" "${FREQUENCIES[@]}" && { REPEATED="${FREQUENCY}"; break; }
+
+        FREQUENCIES+=("${FREQUENCY}")
+    done
+done
+
+echo "FREQUENCY=${FREQUENCY} in ${rounds} rounds" 1>&2
+
+echo "${REPEATED}"
