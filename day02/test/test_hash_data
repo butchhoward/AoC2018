@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+
+printf "%s: " "$0"
+
+function err()
+{
+    echo "$*"
+    exit 1
+}
+
+[ "$(../checksum.py data_checksum_12.txt)" == "12" ] || err "data_checksum_12.txt failed to equal 12"
+echo "SUCCESS"
