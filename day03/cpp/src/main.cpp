@@ -240,27 +240,27 @@ int clever(const std::vector<Claim>& claims)
     return net_overlap_area;
 }
 
+typedef struct Point 
+{
+    int x;
+    int y;
+} Point;
+
+struct ComparePoint
+{
+    //less()
+    bool operator()(const Point& a, const Point& b) const
+    {
+        if (a.x < b.x) return true;
+        if (a.x > b.x) return false;
+        if (a.y < b.y) return true;
+        return false;
+    }
+};  
+
+
 int brute_force(const std::vector<Claim>& claims)
 {
-    typedef struct Point 
-    {
-        int x;
-        int y;
-    } Point;
-    
-    struct ComparePoint
-    {
-        //less()
-        bool operator()(const Point& a, const Point& b) const
-        {
-            if (a.x < b.x) return true;
-            if (a.x > b.x) return false;
-            if (a.y < b.y) return true;
-            return false;
-        }
-    };  
-
-
     std::set<Point, ComparePoint> claimed;
     std::set<Point, ComparePoint> lapland;
     for (auto c : claims)
@@ -278,7 +278,55 @@ int brute_force(const std::vector<Claim>& claims)
         }
     }
     return lapland.size();
+}
 
+
+std::set<int> brute_force_only_once(const std::vector<Claim>& claims)
+{
+    std::set<int> perfect;
+
+    std::set<Point, ComparePoint> claimed;
+    std::set<Point, ComparePoint> lapland;
+    for (auto c : claims)
+    {
+        for (int x = c.rect.x; x < c.rect.x + c.rect.w; x++)
+        {
+            for (int y = c.rect.y; y < c.rect.y + c.rect.h; y++)
+            {
+                Point p = {x,y};
+                if ( !claimed.insert(p).second )
+                {
+                    lapland.insert(p);
+                }
+            }
+        }
+    }
+
+    for (auto c : claims)
+    {
+        bool lapped=false;
+        for (int x = c.rect.x; x < c.rect.x + c.rect.w; x++)
+        {
+            for (int y = c.rect.y; y < c.rect.y + c.rect.h; y++)
+            {
+                Point p = {x,y};
+                if ( lapland.count(p) != 0 )
+                {
+                    lapped = true;
+                    break;
+                }
+            }
+            if (lapped) {
+                break;
+            }
+        }
+        if (!lapped)
+        {
+            perfect.insert(c.id);
+        }
+    }
+
+    return perfect;
 }
 
 int main(int argc, char *argv[])
@@ -305,8 +353,16 @@ int main(int argc, char *argv[])
 
     std::cout << "brute overclaimed area:" << brute_force(claims) << std::endl;
 
-    auto clever_overclaimed = clever(claims);
-    std::cout << "clever overclaimed area:" << clever_overclaimed << std::endl;
+    auto perfect = brute_force_only_once(claims);
+    std::cout << "brute not overclaimed:" << std::endl;
+    for (auto c : perfect)
+    {
+        std::cout << c << std::endl;
+    }
+    std::cout << "===" << std::endl;
+
+    // auto clever_overclaimed = clever(claims);
+    // std::cout << "clever overclaimed area:" << clever_overclaimed << std::endl;
 
     return 0;
 }
