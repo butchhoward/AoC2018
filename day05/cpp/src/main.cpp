@@ -16,6 +16,7 @@
 #include <experimental/set>
 #include <numeric>
 #include <iterator>
+#include <stdint.h>
 
 typedef unsigned char DataType;
 typedef std::vector<DataType> InputDataType;
@@ -41,19 +42,11 @@ InputDataType read_file(const std::string& filename)
         return data;
     }
 
-    std::vector<std::string> raw;
     std::string line;
-    while (std::getline(datafile, line))
+    std::getline(datafile, line);
+    for (auto c : line)
     {
-        raw.push_back(line);
-    }
-
-    for ( auto line : raw)
-    {
-        for (auto c : line)
-        {
-            data.push_back(c);
-        }
+        data.push_back(c);
     }
 
     return data;
@@ -92,28 +85,34 @@ Polar polar =
 
 InputDataType collapse_units(const InputDataType& data)
 {
+    // std::cout << "input: (" << data.size() << ") '" << data << "'" << std::endl;
     InputDataType uncollapsed;
     for (size_t i=0; i < data.size();)
     {
         auto a(data[i]);
-        auto b(data[i+1]);
+        if (i+1 < data.size())
+        {
+            auto b(data[i+1]);
+            // std::cout << i << " (" << a << "," << b << ") ";
+            if (a == polar[b])
+            {
+                i+=2;
+                continue;
+            }
+        }
 
-        if ( a == polar[b])
-        {
-            i+=2;
-        }
-        else
-        {
-            i++;
-            uncollapsed.push_back(a);
-        }
+        i++;
+        uncollapsed.push_back(a);
+        // std::cout << uncollapsed << std::endl;
     }
 
     if (uncollapsed.size() == data.size())
     {
+        // std::cout << "|return: '" << data << "'" << std::endl;
         return data;
     }
 
+    // std::cout << "|recurse: '" << uncollapsed << "'" << std::endl;
     return collapse_units(uncollapsed);
 }
 
@@ -123,9 +122,29 @@ void solve_part1(const InputDataType& data)
     std::cout << "data: " << data.size() << " collapsed: " << collapsed.size() << std::endl;
 }
 
-void solve_part2(const InputDataType& /* data */)
+void solve_part2(const InputDataType& data)
 {
+    // std::cout << std::endl << std::endl << "solve_part2" << std::endl;
+    size_t shortest = SIZE_MAX;
+    for ( DataType C = 'A', c = 'a'; C <= 'Z'; C++, c++)
+    {   
+        auto w = data;
+        // std::cout << "|| " << data.size() << " " << w.size();
+        w.erase(
+            std::remove_if(w.begin(), w.end(), [C,c](DataType x){ return x == C || x == c;}),
+            w.end()
+        );
+        // std::cout << "|" << data << "|" << w << "|| " << data.size() << " " << w.size() << std::endl;
+        auto collapsed = collapse_units(w);
+        // std::cout << "|" << data << "|" << w << "|" << collapsed << "|| " << data.size() << " " << w.size();
 
+        // std::cout << " " << w.size() << " || " << C << c << ":" << collapsed.size() << std::endl;
+        if (collapsed.size() < shortest)
+        {
+            shortest = collapsed.size();
+        }
+    }
+    std::cout << "shortest: " << shortest << std::endl;
 }
 
 int main(int argc, char *argv[])
@@ -143,7 +162,9 @@ int main(int argc, char *argv[])
         std::exit(1);
     }
 
-
+    // InputDataType z = 
+    // { 'd','a','b','A','a','B','A','a','D','A' };
+    // std::cout << collapse_units(z) << std::endl;
     solve_part1(data);
     solve_part2(data);
 
