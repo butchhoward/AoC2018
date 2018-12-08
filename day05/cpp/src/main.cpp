@@ -83,23 +83,25 @@ Polar polar =
         {'Z', 'z'}, {'z', 'Z'},
     };
 
-InputDataType collapse_units(const InputDataType& data)
+InputDataType collapse_units(const InputDataType& data, const InputDataType& discard = InputDataType())
 {
     InputDataType uncollapsed;
-    for (size_t i=0; i < data.size();)
+    for (size_t i=0; i < data.size(); i++)
     {
         auto a(data[i]);
+        if ( std::find(discard.begin(), discard.end(), a) != discard.end() )
+        {
+            continue;
+        } 
         if (i+1 < data.size())
         {
             auto b(data[i+1]);
             if (a == polar[b])
             {
-                i+=2;
+                i++;
                 continue;
             }
         }
-
-        i++;
         uncollapsed.push_back(a);
     }
 
@@ -122,12 +124,8 @@ void solve_part2(const InputDataType& data)
     size_t shortest = SIZE_MAX;
     for ( DataType C = 'A', c = 'a'; C <= 'Z'; C++, c++)
     {   
-        auto w = data;
-        w.erase(
-            std::remove_if(w.begin(), w.end(), [C,c](DataType x){ return x == C || x == c;}),
-            w.end()
-        );
-        auto collapsed = collapse_units(w);
+        InputDataType discard = {C,c};
+        auto collapsed = collapse_units(data, discard);
 
         if (collapsed.size() < shortest)
         {
