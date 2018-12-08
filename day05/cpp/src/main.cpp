@@ -20,6 +20,15 @@
 typedef unsigned char DataType;
 typedef std::vector<DataType> InputDataType;
 
+std::ostream & operator <<(std::ostream &os, const InputDataType& d)
+{
+    for ( auto c : d)
+    {
+        os << c;
+    }
+    return os;
+}
+
 
 InputDataType read_file(const std::string& filename)
 {
@@ -43,19 +52,78 @@ InputDataType read_file(const std::string& filename)
     {
         for (auto c : line)
         {
-            std::cout << c << std::endl;
+            data.push_back(c);
         }
     }
 
     return data;
 }
 
-void solve_part1(const InputDataType& data)
-{
+typedef std::map<DataType,DataType> Polar;
+Polar polar = 
+    {
+        {'A', 'a'}, {'a', 'A'},
+        {'B', 'b'}, {'b', 'B'},
+        {'C', 'c'}, {'c', 'C'},
+        {'D', 'd'}, {'d', 'D'},
+        {'E', 'e'}, {'e', 'E'},
+        {'F', 'f'}, {'f', 'F'},
+        {'G', 'g'}, {'g', 'G'},
+        {'H', 'h'}, {'h', 'H'},
+        {'I', 'i'}, {'i', 'I'},
+        {'J', 'j'}, {'j', 'J'},
+        {'K', 'k'}, {'k', 'K'},
+        {'L', 'l'}, {'l', 'L'},
+        {'M', 'm'}, {'m', 'M'},
+        {'N', 'n'}, {'n', 'N'},
+        {'O', 'o'}, {'o', 'O'},
+        {'P', 'p'}, {'p', 'P'},
+        {'Q', 'q'}, {'q', 'Q'},
+        {'R', 'r'}, {'r', 'R'},
+        {'S', 's'}, {'s', 'S'},
+        {'T', 't'}, {'t', 'T'},
+        {'U', 'u'}, {'u', 'U'},
+        {'V', 'v'}, {'v', 'V'},
+        {'W', 'w'}, {'w', 'W'},
+        {'X', 'x'}, {'x', 'X'},
+        {'Y', 'y'}, {'y', 'Y'},
+        {'Z', 'z'}, {'z', 'Z'},
+    };
 
+InputDataType collapse_units(const InputDataType& data)
+{
+    InputDataType uncollapsed;
+    for (size_t i=0; i < data.size();)
+    {
+        auto a(data[i]);
+        auto b(data[i+1]);
+
+        if ( a == polar[b])
+        {
+            i+=2;
+        }
+        else
+        {
+            i++;
+            uncollapsed.push_back(a);
+        }
+    }
+
+    if (uncollapsed.size() == data.size())
+    {
+        return data;
+    }
+
+    return collapse_units(uncollapsed);
 }
 
-void solve_part2(const InputDataType& data)
+void solve_part1(const InputDataType& data)
+{
+    auto collapsed = collapse_units(data);
+    std::cout << "data: " << data.size() << " collapsed: " << collapsed.size() << std::endl;
+}
+
+void solve_part2(const InputDataType& /* data */)
 {
 
 }
