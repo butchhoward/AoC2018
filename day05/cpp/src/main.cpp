@@ -85,7 +85,6 @@ Polar polar =
 
 InputDataType collapse_units(const InputDataType& data)
 {
-    // std::cout << "input: (" << data.size() << ") '" << data << "'" << std::endl;
     InputDataType uncollapsed;
     for (size_t i=0; i < data.size();)
     {
@@ -93,7 +92,6 @@ InputDataType collapse_units(const InputDataType& data)
         if (i+1 < data.size())
         {
             auto b(data[i+1]);
-            // std::cout << i << " (" << a << "," << b << ") ";
             if (a == polar[b])
             {
                 i+=2;
@@ -103,16 +101,13 @@ InputDataType collapse_units(const InputDataType& data)
 
         i++;
         uncollapsed.push_back(a);
-        // std::cout << uncollapsed << std::endl;
     }
 
     if (uncollapsed.size() == data.size())
     {
-        // std::cout << "|return: '" << data << "'" << std::endl;
         return data;
     }
 
-    // std::cout << "|recurse: '" << uncollapsed << "'" << std::endl;
     return collapse_units(uncollapsed);
 }
 
@@ -124,21 +119,16 @@ void solve_part1(const InputDataType& data)
 
 void solve_part2(const InputDataType& data)
 {
-    // std::cout << std::endl << std::endl << "solve_part2" << std::endl;
     size_t shortest = SIZE_MAX;
     for ( DataType C = 'A', c = 'a'; C <= 'Z'; C++, c++)
     {   
         auto w = data;
-        // std::cout << "|| " << data.size() << " " << w.size();
         w.erase(
             std::remove_if(w.begin(), w.end(), [C,c](DataType x){ return x == C || x == c;}),
             w.end()
         );
-        // std::cout << "|" << data << "|" << w << "|| " << data.size() << " " << w.size() << std::endl;
         auto collapsed = collapse_units(w);
-        // std::cout << "|" << data << "|" << w << "|" << collapsed << "|| " << data.size() << " " << w.size();
 
-        // std::cout << " " << w.size() << " || " << C << c << ":" << collapsed.size() << std::endl;
         if (collapsed.size() < shortest)
         {
             shortest = collapsed.size();
@@ -162,9 +152,6 @@ int main(int argc, char *argv[])
         std::exit(1);
     }
 
-    // InputDataType z = 
-    // { 'd','a','b','A','a','B','A','a','D','A' };
-    // std::cout << collapse_units(z) << std::endl;
     solve_part1(data);
     solve_part2(data);
 
