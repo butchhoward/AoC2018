@@ -257,9 +257,42 @@ Guard sleepingest_guard(const Guards& gs)
     auto git = gs.find(idit->first);
     return git->second;
 }
- 
 
-int hour_guard_sleeps_most(const Guard& g)
+//Guard, Minute pair for sleepingest and which minute
+std::pair<int, int> sleepingest_guard_by_minute(const Guards& gs)
+{
+
+    typedef std::pair<int, int> Hourmax;
+    std::map<int, Hourmax> ghsum;
+    for (auto gp : gs)
+    {
+        auto g = gp.second;
+        std::map<int, int> hcount;
+        for( auto h=0; h<60; h++)
+        {
+            auto hs = std::count_if(g.sleeps.begin(), g.sleeps.end(), [h](const Sleeping& s){return s.minute == h;});
+            hcount[h] = hs;
+        }
+
+        using pair_type = decltype(hcount)::value_type;
+        auto hit = std::max_element(hcount.begin(), hcount.end(),
+            [](const pair_type& a, const pair_type& b) {return a.second < b.second;}
+            );
+
+        ghsum[g.id] = Hourmax(hit->first, hit->second);
+    }
+
+    using pair_type = decltype(ghsum)::value_type;
+    auto gsumit = std::max_element(ghsum.begin(), ghsum.end(),
+        [](const pair_type& a, const pair_type& b) {return a.second.second < b.second.second;}
+        );
+
+    auto r = std::pair<int,int>(gsumit->first, gsumit->second.first);
+    return r;
+}
+
+
+int minute_guard_sleep_most(const Guard& g)
 {
     std::map<int, int> hcount;
 
@@ -268,16 +301,13 @@ int hour_guard_sleeps_most(const Guard& g)
         auto hs = std::count_if(g.sleeps.begin(), g.sleeps.end(), [h](const Sleeping& s){return s.minute == h;});
         hcount[h] = hs;
     }
-    int mx = -1, hx;
-    for ( auto s : hcount)
-    {
-        if (s.second > mx)
-        {
-            hx = s.first;
-            mx = s.second;
-        }
-    }
-    return hx;
+
+    using pair_type = decltype(hcount)::value_type;
+    auto mxit = std::max_element(hcount.begin(), hcount.end(),
+        [](const pair_type& a, const pair_type& b) {return a.second < b.second;}
+        );
+
+    return mxit->first;
 }
 
 int main(int argc, char *argv[])
@@ -301,9 +331,11 @@ int main(int argc, char *argv[])
     // std::cout << gs << std::endl;
 
     auto g = sleepingest_guard(gs);
-    auto h = hour_guard_sleeps_most(g);
+    auto h = minute_guard_sleep_most(g);
     auto part1 = g.id * h;
     std::cout << "part1 sleeper: " << g.id << " hour=" << h << " answer=" << part1 << std::endl;
 
+    auto g2 = sleepingest_guard_by_minute(gs);
+    std::cout << "part2 sleeper: " << g2.first << " hour=" << g2.second << " answer=" << g2.first * g2.second << std::endl;
     return 0;
 }
