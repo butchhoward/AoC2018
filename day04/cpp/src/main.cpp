@@ -17,21 +17,29 @@
 #include <numeric>
 #include <iterator>
 
+typedef enum {
+    Sleep,
+    Wake,
+    Other
+} EventType;
+
 typedef struct Event 
 {
     int id;
-    std::string yyyy,mm,dd,hh,mn,note;
+    std::string date;
+    int hh,mn;
+    EventType etype;
+    std::string note;
 } Event;
 
 void dump(const Event& event)
 {
     std::cout 
         << event.id << ", " 
-        << event.yyyy << ", " 
-        << event.mm << ", " 
-        << event.dd << ", " 
+        << event.date << ", " 
         << event.hh << ", " 
         << event.mn << ", " 
+        << (event.etype == EventType::Sleep ? "Sleep" : (event.etype == EventType::Wake?"Wake":"Other"))
         << event.note;
 }
 void dump(const std::vector<Event>& events)
@@ -55,14 +63,9 @@ Event parse_input(const std::string& value)
     std::istringstream stream(value);
     Event item;
     char c;
-    std::string yyyy,mm,dd,hh,mn,note;
- 
+
     stream >> c             //[
-           >> std::setw(4) >> item.yyyy
-           >> c             //-
-           >> std::setw(2) >> item.dd
-           >> c             //-
-           >> std::setw(2) >> item.mm
+           >> std::setw(10) >> item.date
            >> std::ws
            >> std::setw(2) >> item.hh
            >> c             //:
@@ -70,6 +73,20 @@ Event parse_input(const std::string& value)
            >> std::setw(1) >> c             //]
            ;
            std::getline(stream, item.note);
+
+           if (item.note.find("falls asleep") != std::string::npos)
+           {
+               item.etype = EventType::Sleep;
+           }
+           else if (item.note.find("wakes up") != std::string::npos)
+           {
+               item.etype = EventType::Wake;
+           }
+           else
+           {
+               item.etype = EventType::Other;
+           }
+           
     return item;
  }
 
@@ -79,18 +96,13 @@ int parse_guardid( const std::string note, int default_id)
     // [1518-04-09 00:01] Guard #3407 begins shift
 
     auto octothorpe = note.find('#');
-    std::cout << note << " octo: " 
-        << octothorpe 
-        << " initial id:" << id;
     if (octothorpe != std::string::npos)
     {
         std::istringstream s(note);
         s.seekg(octothorpe+1);
         s >> id;
-        std::cout << " parsed id=" << id;
     }
 
-    std::cout << " final id=" << id << std::endl;
     return id;
 }
 
@@ -125,6 +137,148 @@ std::vector<Event> read_file(const std::string& filename)
     return events;
 }
 
+typedef struct Sleeping
+{
+    std::string date;
+    int minute;
+    int guard;
+} Sleeping;
+
+struct CompareSleepingPoint
+{
+    //less()
+    bool operator()(const Sleeping& a, const Sleeping& b) const
+    {
+        if (a.date < b.date) return true;
+        if (a.date > b.date) return false;
+        if (a.minute < b.minute) return true;
+        return false;
+    }
+};  
+
+void dump(const Sleeping& s)
+{
+    std::cout << "Sleeping: "<< s.guard << " " << s.date << " " << s.minute;
+}
+
+typedef std::set<Sleeping, CompareSleepingPoint> Schedule;
+
+typedef struct Guard
+{
+    int id;
+    Schedule sleeps;
+} Guard;
+
+typedef std::map<int, Guard> Guards;
+
+void dump(const Guard& g)
+{
+    std::cout << "Guard: " << g.id << std::endl;
+    for (auto s : g.sleeps)
+    {
+        dump(s);
+        std::cout << std::endl;
+    }
+    std::cout << "====" << std::endl;
+}
+
+ Guards get_guard_schedule(const std::vector<Event>& events)
+{
+    Guards gs;
+    const int MIDNITE_HOUR=0;
+
+    bool sleeping(false);
+    int fellasleep(0);
+
+    for ( auto e : events)
+    {
+        if (e.hh == MIDNITE_HOUR)
+        {
+            Guard g;
+            auto git = gs.find(e.id);
+            if (git != gs.end())
+            {
+                sleeping = false;
+                g = git->second;
+            }
+            g.id = e.id;
+
+            if (e.etype == EventType::Sleep)
+            {
+                fellasleep = e.mn;
+            }
+            else if (e.etype == EventType::Wake)
+            {
+                for ( int f = fellasleep; f < e.mn; f++)
+                {
+                    Sleeping s = {e.date, f, e.id};
+                    g.sleeps.insert(s);
+                }
+                sleeping = false;
+            }
+            gs[e.id] = g;
+        }
+    }
+
+    return gs;
+}
+
+void dump(const Guards& gs)
+{
+    std::cout << "Guards:" << std::endl;
+    for (auto g : gs)
+    {
+        dump(g.second);
+    }
+    std::cout << "================" << std::endl;
+}
+
+Guard sleepingest_guard(const Guards& gs)
+{
+    std::map<int, int> gsum;
+
+    for( auto g : gs)
+    {
+        int gid = g.first;
+        int hs = g.second.sleeps.size();
+        gsum[gid] = hs;
+    }
+    int x = -1, id;
+    for ( auto s : gsum)
+    {
+        if (s.second > x)
+        {
+            id = s.first;
+            x = s.second;
+        }
+    }
+    auto git = gs.find(id);
+    return git->second;
+}
+ 
+
+int hour_guard_sleeps_most(const Guard& g)
+{
+    std::map<int, int> hcount;
+
+    for( auto h=0; h<60; h++)
+    {
+        auto hs = std::count_if(g.sleeps.begin(), g.sleeps.end(), [h](const Sleeping& s){return s.minute == h;});
+        std::cout << h << " " << hs << std::endl;
+        hcount[h] = hs;
+    }
+    int mx = -1, hx;
+    for ( auto s : hcount)
+    {
+        if (s.second > mx)
+        {
+            hx = s.first;
+            mx = s.second;
+        }
+    }
+    std::cout << "max:" << hx << " " << mx << std::endl;
+    return hx;
+}
 
 int main(int argc, char *argv[])
 {
@@ -141,10 +295,21 @@ int main(int argc, char *argv[])
         std::exit(1);
     }
 
-    dump(events);
-    std::cout << std::endl;
+    // dump(events);
+    // std::cout << std::endl;
 
+    auto gs = get_guard_schedule(events);
+    for (auto g : gs)
+    {
+        dump(g.second);
+    }
 
+    auto g = sleepingest_guard(gs);
+    auto h = hour_guard_sleeps_most(g);
+    auto part1 = g.id * h;
+    std::cout << "sleeper: " << g.id << std::endl;
+    std::cout << " hour=" << h << std::endl;
+    std::cout << "answer=" << part1 << std::endl;
 
     return 0;
 }
