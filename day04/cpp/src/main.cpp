@@ -17,6 +17,7 @@
 #include <numeric>
 #include <iterator>
 
+
 typedef enum {
     Sleep,
     Wake,
@@ -32,23 +33,25 @@ typedef struct Event
     std::string note;
 } Event;
 
-void dump(const Event& event)
+std::ostream & operator <<(std::ostream &os, const Event& event)
 {
-    std::cout 
+    os 
         << event.id << ", " 
         << event.date << ", " 
         << event.hh << ", " 
         << event.mn << ", " 
         << (event.etype == EventType::Sleep ? "Sleep" : (event.etype == EventType::Wake?"Wake":"Other"))
         << event.note;
+    return os;
 }
-void dump(const std::vector<Event>& events)
+
+std::ostream & operator <<(std::ostream &os, std::vector<Event>& events)
 {
     for ( auto e : events)
     {
-        dump(e);
-        std::cout << std::endl;
+        os << e << std::endl;
     }
+    return os;
 }
 
 
@@ -156,9 +159,10 @@ struct CompareSleepingPoint
     }
 };  
 
-void dump(const Sleeping& s)
+std::ostream & operator <<(std::ostream &os, const Sleeping& s)
 {
-    std::cout << "Sleeping: "<< s.guard << " " << s.date << " " << s.minute;
+    os << "Sleeping: "<< s.guard << " " << s.date << " " << s.minute;
+    return os;
 }
 
 typedef std::set<Sleeping, CompareSleepingPoint> Schedule;
@@ -171,15 +175,15 @@ typedef struct Guard
 
 typedef std::map<int, Guard> Guards;
 
-void dump(const Guard& g)
+std::ostream & operator <<(std::ostream &os, const Guard& g)
 {
-    std::cout << "Guard: " << g.id << std::endl;
+    os << "Guard: " << g.id << std::endl;
     for (auto s : g.sleeps)
     {
-        dump(s);
-        std::cout << std::endl;
+        os << s << std::endl;
     }
-    std::cout << "====" << std::endl;
+    os << "====" << std::endl;
+    return os;
 }
 
  Guards get_guard_schedule(const std::vector<Event>& events)
@@ -223,14 +227,15 @@ void dump(const Guard& g)
     return gs;
 }
 
-void dump(const Guards& gs)
+std::ostream & operator <<(std::ostream &os, const Guards& gs)
 {
-    std::cout << "Guards:" << std::endl;
+    os << "Guards:" << std::endl;
     for (auto g : gs)
     {
-        dump(g.second);
+        os << g.second;
     }
-    std::cout << "================" << std::endl;
+    os << "================" << std::endl;
+    return os;
 }
 
 Guard sleepingest_guard(const Guards& gs)
@@ -243,16 +248,13 @@ Guard sleepingest_guard(const Guards& gs)
         int hs = g.second.sleeps.size();
         gsum[gid] = hs;
     }
-    int x = -1, id;
-    for ( auto s : gsum)
-    {
-        if (s.second > x)
-        {
-            id = s.first;
-            x = s.second;
-        }
-    }
-    auto git = gs.find(id);
+
+    using pair_type = decltype(gsum)::value_type;
+    auto idit = std::max_element(gsum.begin(), gsum.end(),
+        [](const pair_type& a, const pair_type& b) {return a.second < b.second;}
+        );
+
+    auto git = gs.find(idit->first);
     return git->second;
 }
  
@@ -264,7 +266,6 @@ int hour_guard_sleeps_most(const Guard& g)
     for( auto h=0; h<60; h++)
     {
         auto hs = std::count_if(g.sleeps.begin(), g.sleeps.end(), [h](const Sleeping& s){return s.minute == h;});
-        std::cout << h << " " << hs << std::endl;
         hcount[h] = hs;
     }
     int mx = -1, hx;
@@ -276,7 +277,6 @@ int hour_guard_sleeps_most(const Guard& g)
             mx = s.second;
         }
     }
-    std::cout << "max:" << hx << " " << mx << std::endl;
     return hx;
 }
 
@@ -295,21 +295,15 @@ int main(int argc, char *argv[])
         std::exit(1);
     }
 
-    // dump(events);
-    // std::cout << std::endl;
+    // std::cout << events << std::endl;
 
     auto gs = get_guard_schedule(events);
-    for (auto g : gs)
-    {
-        dump(g.second);
-    }
+    // std::cout << gs << std::endl;
 
     auto g = sleepingest_guard(gs);
     auto h = hour_guard_sleeps_most(g);
     auto part1 = g.id * h;
-    std::cout << "sleeper: " << g.id << std::endl;
-    std::cout << " hour=" << h << std::endl;
-    std::cout << "answer=" << part1 << std::endl;
+    std::cout << "part1 sleeper: " << g.id << " hour=" << h << " answer=" << part1 << std::endl;
 
     return 0;
 }
