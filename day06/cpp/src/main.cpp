@@ -73,14 +73,84 @@ InputDataType read_file(const std::string& filename)
     {
         data.push_back(parse_data(line));
     }
-    std::cout << data << std::endl;
+    // std::cout << data << std::endl;
 
     return data;
 }
 
-void solve_part1(const InputDataType& /* data */)
+int manhattan_distance( const DataType& p1, const DataType& p2)
 {
+    //For example, in the plane, the taxicab distance between (p1,p2)and (q1,q2) is |p1-q1|+|p2-q2|.
+    return abs(p1.x-p2.x) + abs(p1.y-p2.y);
+}
 
+
+typedef struct PointDistanceFrom
+{
+    DataType p;
+    int d;
+} PointDistanceFrom;
+
+std::ostream & operator <<(std::ostream &os, const PointDistanceFrom& d)
+{
+    os << d.p << "=>" << d.d;
+    return os;
+}
+
+typedef struct PointDistancesFrom
+{
+    DataType from;
+    std::vector< PointDistanceFrom > ps;
+} PointDistancesFrom;
+
+std::ostream & operator <<(std::ostream &os, const PointDistancesFrom& ds)
+{
+    os << ds.from << "-->";
+    for ( auto d : ds.ps)
+    {
+        os << d << "; ";
+    }
+    os << std::endl;
+    return os;
+}
+
+
+typedef std::vector<PointDistancesFrom> PointDistances;
+
+std::ostream & operator <<(std::ostream &os, const PointDistances& pds)
+{
+    for ( auto pd : pds)
+    {
+        os << pd << std::endl;
+    }
+    return os;
+}
+
+PointDistances point_distances(const InputDataType& a,const InputDataType& b)
+{
+    PointDistances pds;
+
+    for (auto p1 : a )
+    {
+        PointDistancesFrom pd1;
+        pd1.from = p1;
+
+        for (auto p2 : b )
+        {
+            PointDistanceFrom pd = {p2, manhattan_distance(p1,p2)};
+            pd1.ps.push_back(pd);
+        }
+
+        pds.push_back(pd1);
+    }
+
+    return pds;
+}
+
+void solve_part1(const InputDataType& data)
+{
+    auto pds = point_distances(data,data);
+    std::cout << pds;
 }
 
 void solve_part2(const InputDataType& /* data */)
