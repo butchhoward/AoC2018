@@ -268,6 +268,41 @@ Grid build_grid(const InputDataType& data, std::pair<Point, Point> bounds)
     return grid;
 }
 
+//build a grid with the (one?) point that has total distance 10000
+std::vector<PointDistance> get_part2_areas(const InputDataType& data, std::pair<Point, Point> bounds, int max_distance)
+{
+    Point upper_left(bounds.first), lower_right(bounds.second);
+
+    InputDataType grid_points;
+    for (int x = upper_left.x; x < lower_right.x; x++)
+    {
+        for (int y = upper_left.y; y < lower_right.y; y++)
+        {
+            DataType d;
+            d.p = {x, y};
+            grid_points.push_back( d );
+        }
+    }
+
+    // auto ds = point_distances(data, grid_points);   
+    // std::cout << "Point Distances" << std::endl << ds << std::endl;
+
+    std::vector<PointDistance> areas;
+    for (auto g : grid_points)
+    {
+        auto total_distance = std::accumulate( data.begin(), data.end(), 0,
+                        [g](int a, const DataType& d) 
+                            {return a + manhattan_distance(g.p, d.p);}
+                );
+        if (total_distance < max_distance)
+        {
+            areas.push_back({g.p, total_distance});
+        }
+    }
+
+    return areas;
+}
+
 //point+number, in this case area isstead of distance.
 PointDistances get_areas(const InputDataType& data, const Grid& grid, std::pair<Point, Point> bounds)
 {
@@ -314,18 +349,30 @@ void solve_part1(const InputDataType& data)
 
 }
 
-void solve_part2(const InputDataType& /* data */)
+
+
+void solve_part2(const InputDataType& data, int max_distance)
 {
+    auto bounds = city_bounds(data);
+    std::cout << "Max Distance:" << max_distance << " Bounds: " << bounds.first << bounds.second << std::endl;
+
+    auto areas = get_part2_areas(data, bounds, max_distance);
+    // std::cout << "Areas:" << std::endl << areas << std::endl << std::endl;
+
+    std::cout << "Answer: " << areas.size() << std::endl;
 
 }
 
 int main(int argc, char *argv[])
 {
+    
     if (argc < 2)
     {
         std::cout << "Need a file name" << std::endl;
         std::exit(1);
     }
+
+    int max_distance=10000;
 
     auto data = read_file(argv[1]);
     if (data.size()==0)
@@ -334,8 +381,14 @@ int main(int argc, char *argv[])
         std::exit(1);
     }
 
+    if ( argc >= 3)
+    {
+        std::istringstream stream(argv[2]);
+        stream >> max_distance;
+    }
+
     solve_part1(data);
-    solve_part2(data);
+    solve_part2(data, max_distance);
 
     return 0;
 }
