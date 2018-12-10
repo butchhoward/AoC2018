@@ -30,7 +30,7 @@ DEPS = $(OBJECTS:.o=.d)
 TEST_DEPS = $(TEST_OBJECTS:.o=.d)
 
 # flags #
-COMPILE_FLAGS = -std=c++14 -Wall -Wextra -g
+COMPILE_FLAGS = -std=c++14 -Wall -Wextra -Werror -g
 INCLUDES = -I include/ -I /usr/local/include
 
 # Space-separated pkg-config libraries used by this project
