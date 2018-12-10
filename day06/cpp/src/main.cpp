@@ -295,10 +295,6 @@ PointDistances get_areas(const InputDataType& data, const Grid& grid, std::pair<
 
 void solve_part1(const InputDataType& data)
 {
-    auto pds = point_distances(data,data);
-    // auto mxd = max_distance(pds);
-    // std::cout << "maxd=" << mxd << std::endl;
-
     auto bounds = city_bounds(data);
     // auto max_bounds = adjust_bounds(bounds, mxd);
     std::cout << "Bounds: " << bounds.first << bounds.second << std::endl;
@@ -308,7 +304,7 @@ void solve_part1(const InputDataType& data)
     std::cout << "Grid:" << grid.size() << std::endl;
 
     auto areas = get_areas(data, grid, bounds);
-    std::cout << "areas:" << areas << std::endl;
+    // std::cout << "areas:" << areas << std::endl;
 
     auto answer = std::max_element(areas.begin(), areas.end(),
             [](const PointDistance& pd1, const PointDistance& pd2){return pd1.d < pd2.d;}
