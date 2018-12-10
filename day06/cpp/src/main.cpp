@@ -233,7 +233,7 @@ Grid build_grid(const InputDataType& data, std::pair<Point, Point> bounds)
         }
     }
 
-    auto ds = point_distances(data, grid_points);   
+    // auto ds = point_distances(data, grid_points);   
     // std::cout << "Point Distances" << std::endl << ds << std::endl;
 
     Grid grid;
@@ -242,24 +242,20 @@ Grid build_grid(const InputDataType& data, std::pair<Point, Point> bounds)
         //find the nearest data point for each grid point
         PointDistances nearlist;
         PointDistance nearest = {{upper_left.x-1, upper_left.y-1}, INT_MAX};
-        for (auto d : ds)
+        for (auto d : data)
         {
-            //find the distance from the grid point to the data point
-            auto pit = std::find_if( d.pds.begin(), d.pds.end(),
-                [g](const PointDistance& pdf)
-                    {return pdf.p == g.p;}
-                );
+            auto distance = manhattan_distance(g.p, d.p);
             
-            if (pit->d < nearest.d)
+            if (distance < nearest.d)
             {
-                nearest = {d.p, pit->d};
+                nearest = {d.p, distance};
                 nearlist.clear();
                 nearlist.push_back(nearest);
             }
-            else if (pit->d == nearest.d && pit->p != d.p)
+            else if (distance == nearest.d && g.p != d.p)
             {
                 //remove any grid points that are equi-distant from a data point
-                nearlist.push_back({d.p, pit->d});
+                nearlist.push_back({d.p, distance});
             }
         }
         if (nearlist.size() == 1)
@@ -341,7 +337,6 @@ int main(int argc, char *argv[])
         std::cout << "No events in file." << std::ends;
         std::exit(1);
     }
-
 
     solve_part1(data);
     solve_part2(data);
