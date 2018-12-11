@@ -5,7 +5,9 @@
 #include <string>
 #include <tuple>
 #include <vector>
+#include <list>
 #include <map>
+#include <memory>
 
 #include <iostream>
 #include <iomanip>
@@ -17,10 +19,13 @@
 #include <numeric>
 #include <iterator>
 
+typedef unsigned char Step;
+
 typedef struct DataType
 {
-    unsigned char step, next;
+    Step step, next;
 } DataType;
+
 typedef std::vector<DataType> InputDataType;
 
 std::ostream & operator <<(std::ostream &os, const DataType& p)
@@ -29,12 +34,63 @@ std::ostream & operator <<(std::ostream &os, const DataType& p)
     return os;
 }
 
-std::ostream & operator <<(std::ostream &os, const InputDataType& d)
+std::ostream & operator <<(std::ostream &os, const InputDataType& data)
 {
-    for ( auto p : d)
+    for ( auto d : data)
     {
-        os << p << std::endl;
+        os << d << std::endl;
     }
+    return os;
+}
+
+typedef class StepTree StepTree;
+class StepTree
+{
+public:
+    StepTree() 
+        : step(0)
+    {}
+    StepTree(const Step& s)
+        : step(s)
+    {}
+    ~StepTree()
+    {
+    }
+
+    void add(const DataType& d)
+    {
+        if (step == 0)
+        {
+            step = d.step;
+            trees.push_back( std::make_unique<StepTree>(d.next) );
+        }
+        else
+        {
+            //find a spot
+            //add the new tree in that spot
+            trees.push_back( std::make_unique<StepTree>(d) );
+        }
+    }
+
+    StepTree(const DataType& d)
+    {
+        add(d);
+    }
+
+    Step step;
+    std::list< std::unique_ptr<StepTree> > trees;
+
+    friend std::ostream & operator <<(std::ostream &os, const StepTree& t);
+};
+
+std::ostream & operator <<(std::ostream &os, const StepTree& t)
+{
+    os << t.step;
+    for ( auto& ts : t.trees )
+    {
+        os << *ts;
+    }
+    
     return os;
 }
 
@@ -76,6 +132,15 @@ InputDataType read_file(const std::string& filename)
 void solve_part1(const InputDataType& data)
 {
     std::cout << data << std::endl;
+
+    StepTree tree;
+
+    for (auto d : data)
+    {
+        tree.add(d);
+    }
+
+    std::cout << "Tree:" << std::endl << tree << std::endl;
 
 }
 
