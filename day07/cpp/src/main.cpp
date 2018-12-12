@@ -44,41 +44,60 @@ std::ostream & operator <<(std::ostream &os, const InputDataType& data)
 }
 
 typedef class StepTree StepTree;
+typedef std::unique_ptr<StepTree> StepTreePtr;
 class StepTree
 {
 public:
     StepTree() 
-        : step(0)
+        : step(0), depth(0)
     {}
     StepTree(const Step& s)
-        : step(s)
+        : step(s), depth(0)
     {}
     ~StepTree()
     {
     }
 
-    void add(const DataType& d)
+    bool add(const DataType& d)
     {
         if (step == 0)
         {
             step = d.step;
-            trees.push_back( std::make_unique<StepTree>(d.next) );
+            push_back( std::make_unique<StepTree>(d.next) );
+            return true;
+        }
+        else if ( step == d.step)
+        {
+            push_back( std::make_unique<StepTree>(d.next) );
+            return true;
         }
         else
         {
-            //find a spot
-            //add the new tree in that spot
-            trees.push_back( std::make_unique<StepTree>(d) );
+            for ( auto& subtree : trees )
+            {
+                if ( subtree->step == d.next )
+                {
+                    return true;
+                }
+                else
+                {
+                    return subtree->add(d);
+                }
+            }
+            return true;
         }
     }
 
-    StepTree(const DataType& d)
-    {
-        add(d);
-    }
-
+protected:
+    int depth;
     Step step;
-    std::list< std::unique_ptr<StepTree> > trees;
+    std::list< StepTreePtr > trees;
+
+    void push_back(StepTreePtr& p)
+    {
+        p->depth = depth+1;
+        trees.push_back(p);
+    }
 
     friend std::ostream & operator <<(std::ostream &os, const StepTree& t);
 };
