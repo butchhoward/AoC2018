@@ -49,10 +49,10 @@ class StepTree
 {
 public:
     StepTree() 
-        : step(0), depth(0)
+        : depth(0), step(0)
     {}
-    StepTree(const Step& s)
-        : step(s), depth(0)
+    StepTree(int dent, const Step& s)
+        : depth(dent), step(s)
     {}
     ~StepTree()
     {
@@ -63,12 +63,12 @@ public:
         if (step == 0)
         {
             step = d.step;
-            push_back( std::make_unique<StepTree>(d.next) );
+            push_back( std::make_unique<StepTree>(depth+1, d.next) );
             return true;
         }
         else if ( step == d.step)
         {
-            push_back( std::make_unique<StepTree>(d.next) );
+            push_back( std::make_unique<StepTree>(depth+1, d.next) );
             return true;
         }
         else
@@ -93,10 +93,10 @@ protected:
     Step step;
     std::list< StepTreePtr > trees;
 
-    void push_back(StepTreePtr& p)
+    void push_back(StepTreePtr p)
     {
         p->depth = depth+1;
-        trees.push_back(p);
+        trees.push_back(std::move(p));
     }
 
     friend std::ostream & operator <<(std::ostream &os, const StepTree& t);
@@ -104,12 +104,11 @@ protected:
 
 std::ostream & operator <<(std::ostream &os, const StepTree& t)
 {
-    os << t.step;
+    os << t.step; 
     for ( auto& ts : t.trees )
     {
         os << *ts;
     }
-    
     return os;
 }
 
